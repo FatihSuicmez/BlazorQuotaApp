@@ -1,0 +1,23 @@
+# Dependencies
+**/[Bb]in/
+**/[Oo]bj/
+
+# Visual Studio Code files
+.vscode/
+
+# User-specific files
+*.user
+*.suo
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+
+# Rider files
+.idea/
+
+# Database files
+*.db
+
+# App settings secrets
+appsettings.Development.json
