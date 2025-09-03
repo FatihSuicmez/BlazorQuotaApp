@@ -6,84 +6,134 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
 
-<PageTitle>Veri Sorgulanıyor</PageTitle>
+<PageTitle>Veri Sorgulama</PageTitle>
 
-<h1>Veri Sorgulama Arayüzü</h1>
-<p>Kalan sorgu haklarınızı aşağıda görebilirsiniz. Günlük 5, aylık 20 sorgu hakkınız bulunmaktadır.</p>
-
-@if (isPageLoading)
-{
-    <p><em>Kullanım hakları yükleniyor...</em></p>
-}
-else if (usageInfo is not null)
-{
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <strong>Günlük Hak: @usageInfo.DayUsed / 5</strong>
-            <div class="progress" style="height: 20px;">
-                <div class="progress-bar" role="progressbar" style="width: @(usageInfo.DayUsed * 20)%" aria-valuenow="@usageInfo.DayUsed" aria-valuemin="0" aria-valuemax="5"></div>
+<AuthorizeView>
+    <NotAuthorized>
+        @* GİRİŞ YAPMAMIŞ KULLANICI İÇİN AÇIKLAMA KARTI *@
+        <div class="container mt-4">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card text-center shadow-sm">
+                        <div class="card-header">
+                            <h4 class="my-2">Veri Sorgulama Platformuna Hoş Geldiniz!</h4>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">Bu platform, günlük ve aylık limitler dahilinde veri sorgulaması yapmanıza olanak tanır.</p>
+                            <p class="card-text">Kullanım haklarınızı görüntülemek ve sorgulama yapmaya başlamak için lütfen giriş yapın veya yeni bir hesap oluşturun.</p>
+                            <a href="Account/Login" class="btn btn-primary">Giriş Yap</a>
+                            <a href="Account/Register" class="btn btn-secondary">Kayıt Ol</a>
+                        </div>
+                        <div class="card-footer text-muted">
+                            Günlük 5 / Aylık 20 Sorgu Hakkı
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <strong>Aylık Hak: @usageInfo.MonthUsed / 20</strong>
-            <div class="progress" style="height: 20px;">
-                <div class="progress-bar bg-success" role="progressbar" style="width: @(usageInfo.MonthUsed * 5)%" aria-valuenow="@usageInfo.MonthUsed" aria-valuemin="0" aria-valuemax="20"></div>
-            </div>
+    </NotAuthorized>
+    <Authorized Context="authContext"> @* <-- HATA DÜZELTMESİ 1: Context yeniden adlandırıldı *@
+        @* GİRİŞ YAPMIŞ KULLANICI İÇİN ANA PANEL *@
+        <div class="d-flex justify-content-between align-items-center mb-3">
+             <h1 class="mb-0">Veri Sorgulama Arayüzü</h1>
+             <span class="text-muted">Hoş geldin, @authContext.User.Identity?.Name!</span> @* <-- HATA DÜZELTMESİ 2: Yeni context adı kullanıldı *@
         </div>
-    </div>
 
-    <EditForm Model="@searchRequest" OnValidSubmit="HandleSearchAsync" FormName="searchForm">
-        <div class="input-group mb-3">
-            <InputText @bind-Value="searchRequest.Term" class="form-control" placeholder="Aranacak kelimeyi girin..." />
-            <button type="submit" class="btn btn-primary" disabled="@(isFormLoading || usageInfo.DayRemaining <= 0 || usageInfo.MonthRemaining <= 0)">
-                @if (isFormLoading)
+        @if (isPageLoading)
+        {
+            <div class="d-flex justify-content-center mt-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Yükleniyor...</span>
+                </div>
+            </div>
+        }
+        else if (usageInfo is not null)
+        {
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Kullanım Durumu</h5>
+                </div>
+                <div class="card-body">
+                     <div class="row">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label class="form-label">Günlük Hak</label>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar" role="progressbar" style="width: @(usageInfo.DayUsed * 20)%" aria-valuenow="@usageInfo.DayUsed" aria-valuemin="0" aria-valuemax="5">
+                                    <strong>@usageInfo.DayUsed / 5</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Aylık Hak</label>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: @(usageInfo.MonthUsed * 5)%" aria-valuenow="@usageInfo.MonthUsed" aria-valuemin="0" aria-valuemax="20">
+                                    <strong>@usageInfo.MonthUsed / 20</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                 <div class="card-header">
+                    <h5 class="mb-0">Sorgulama Yap</h5>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@searchRequest" OnValidSubmit="HandleSearchAsync" FormName="searchForm">
+                        <div class="input-group">
+                            <InputText @bind-Value="searchRequest.Term" class="form-control form-control-lg" placeholder="Aranacak kelimeyi girin..." />
+                            <button type="submit" class="btn btn-primary" disabled="@(isFormLoading || usageInfo.DayRemaining <= 0 || usageInfo.MonthRemaining <= 0)">
+                                @if (isFormLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                    <span class="ms-1">Sorgulanıyor...</span>
+                                }
+                                else
+                                {
+                                    <span>Sorgula</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(errorMessage) || (usageInfo is not null && (usageInfo.DayRemaining <= 0 || usageInfo.MonthRemaining <= 0)))
+        {
+            <div class="alert @(string.IsNullOrEmpty(errorMessage) ? "alert-warning" : "alert-danger") mt-4" role="alert">
+                @if (!string.IsNullOrEmpty(errorMessage))
                 {
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span>Sorgulanıyor...</span>
+                    @errorMessage
+                }
+                else if (usageInfo.DayRemaining <= 0)
+                {
+                    <span>Günlük sorgu limitinize ulaştınız. Yarın tekrar deneyebilirsiniz.</span>
                 }
                 else
                 {
-                    <span>Sorgula</span>
+                    <span>Aylık sorgu limitinize ulaştınız. Gelecek ay tekrar deneyebilirsiniz.</span>
                 }
-            </button>
-        </div>
-    </EditForm>
-
-    @if (usageInfo is not null && (usageInfo.DayRemaining <= 0 || usageInfo.MonthRemaining <= 0))
-{
-    <div class="alert alert-warning mt-3" role="alert">
-        @if (usageInfo.DayRemaining <= 0)
-        {
-            <span>Günlük sorgu limitinize ulaştınız. Yarın tekrar deneyebilirsiniz.</span>
+            </div>
         }
-        else
+
+
+        @if (searchResults.Count > 0)
         {
-            <span>Aylık sorgu limitinize ulaştınız. Gelecek ay tekrar deneyebilirsiniz.</span>
+            <div class="mt-4">
+                <h4>Sorgu Sonuçları</h4>
+                <ul class="list-group shadow-sm">
+                    @foreach (var item in searchResults)
+                    {
+                        <li class="list-group-item">@item</li>
+                    }
+                </ul>
+            </div>
         }
-    </div>
-}
+    </Authorized>
+</AuthorizeView>
 
-}
-
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="alert alert-danger mt-3" role="alert">
-        @errorMessage
-    </div>
-}
-
-@if (searchResults.Count > 0)
-{
-    <div class="mt-4">
-        <h4>Sorgu Sonuçları</h4>
-        <ul class="list-group">
-            @foreach (var item in searchResults)
-            {
-                <li class="list-group-item">@item</li>
-            }
-        </ul>
-    </div>
-}
 
 @code {
     private SearchRequest searchRequest = new();
@@ -102,11 +152,7 @@ else if (usageInfo is not null)
         
         currentUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (string.IsNullOrEmpty(currentUserId))
-        {
-            errorMessage = "Kullanıcı bilgileri alınamadı. Lütfen giriş yaptığınızdan emin olun.";
-        }
-        else
+        if (!string.IsNullOrEmpty(currentUserId))
         {
             try
             {
@@ -137,22 +183,24 @@ else if (usageInfo is not null)
         isFormLoading = true;
         errorMessage = null;
         searchResults.Clear();
+        StateHasChanged(); 
         
         try
         {
             usageInfo = await QuotaService.TryConsumeAsync(currentUserId, searchRequest.Term);
             searchResults = new List<string> { $"'{searchRequest.Term}' için sonuç 1", $"'{searchRequest.Term}' için sonuç 2" };
         }
-        catch (QuotaException ex) // Sadece bizim beklediğimiz limit hatasını yakala
+        catch (QuotaException ex)
         {
             errorMessage = ex.Message;
         }
-        catch (Exception) // Diğer beklenmedik hatalar için
+        catch (Exception)
         {
             errorMessage = "Sorgulama sırasında beklenmedik bir hata oluştu.";
         }
 
         isFormLoading = false;
         searchRequest.Term = "";
+        StateHasChanged();
     }
 }

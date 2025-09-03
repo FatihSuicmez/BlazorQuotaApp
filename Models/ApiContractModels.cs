@@ -31,7 +31,7 @@ public class ErrorResponse
 
 public class SearchRequest
 {
-    public string? Term { get; set; }
+    public string Term { get; set; } = string.Empty;
 }
 
 public class QuotaException : Exception
